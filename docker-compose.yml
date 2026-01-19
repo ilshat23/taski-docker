@@ -1,0 +1,62 @@
+version: '3'
+
+# Перечень томов
+volumes:
+  pg_data:
+  static:
+
+# Перечень контейнеров
+services:
+  # -----Это контейнер с постгрей-----
+  db:
+    # Из какого образа запустить контейнер
+    image: postgres:13.10
+
+    # Файл (или список с файлами) с пер.окружения
+    env_file: .env
+
+    # Какой том подключить для это конт-ра
+    volumes:
+      - pg_data:/var/lib/postgres/data
+
+  # -----Это контейнер с бэкендом-----
+  backend:
+    # Из какого Dockerfile собирать образ для этого контейнера
+    build: ./backend/
+    env_file: .env
+
+    volumes:
+      - static:/backend_static
+
+    # Какие контейнеры нужно запустить до старта этого контейнера
+    depends_on:
+      - db
+
+  # -----Это контейнер с фронтэндом-----
+  frontend:
+    env_file: .env
+    build: ./frontend/
+    command: cp -r /app/build/. /frontend_static/
+    volumes:
+      - static:/frontend_static
+
+  # -----Это контейнер с нжинксом-----
+  gateway:
+    build: ./gateway/
+    
+    # Перенаправляем все запросы с порта 8000 хоста
+    # на порт 80 конейнера
+    ports:
+      - 8000:80
+    
+    depends_on:
+      - backend
+      - frontend
+    
+    volumes:
+      - static:/staticfiles
+
+
+# Все контейнеры, описанные в docker-compose.yml, будут запущены в сети
+# (Docker network). Эту сеть Docker Compose создаст автоматически,
+# описывать её в конфиге необязательно.
