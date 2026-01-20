@@ -49,3 +49,41 @@ jobs:
           python -m flake8 backend/
           cd backend/
           python manage.py test
+  build_and_push_to_docker_hub:
+    runson: ubuntu-latest
+    needs: tests
+    steps:
+      # Получение исходного кода из репозитория гитхаб
+      - name: Checkout the repo
+        uses: actions/checkout@v3
+      
+      # Установка сборщика конейнеров Докер
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      # Авторизация на ДокерХаб
+      - name: Login to Docker
+        uses: docker/login-action@v2
+        # При помощи with передааем в action параметры
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      
+      # Билд и пуш в ДокерХаб
+      - name: Push to DockerHub
+        uses: docker/build-push-action@v4
+        with:
+          # Параметр context: ./backend/ указывает,
+          # что нужный Докерфайл находится в ./backend/
+          context: ./backend/
+
+          # парам push: true указывает, что образ нужно
+          # не только собрать, но и запушить на DockerHub
+          push: true
+
+          # В параметре tags задается название и тег для образа.
+          # Для каждого пересобранного образа
+          # устанавливаем тег lates, чтобы потом на сервере
+          # и в docker-compose.yml не указывать версию
+          tags: ilshat23/taski_backend:latest
+    
