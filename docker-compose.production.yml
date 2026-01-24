@@ -18,7 +18,7 @@ services:
   frontend:
     image: ilshat23/taski_frontend
     env_file: .env
-    command: cp -r /app/build/. /fronted_static/
+    command: cp -r /app/build/. /frontend_static/
     volumes:
       - static_volume:/frontend_static
 
@@ -26,6 +26,6 @@ services:
     image: ilshat23/taski_gateway
     env_file: .env
     volumes:
-      - static_volume:/staticfiles/
+      - static_volume:/staticfiles
     ports:
       - 8000:80
